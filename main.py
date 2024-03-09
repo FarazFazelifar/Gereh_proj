@@ -15,7 +15,7 @@ game_size = 4
 cell_length = (default_size - grid_margin - game_size * grid_margin) / game_size
 min_w = 300
 frame = start_frame = 0
-animation_length = 5
+animation_length = 10
 start_screen = True
 game_screen = False
 end_screen = False
@@ -26,6 +26,7 @@ move_grid = [
     [0, 0, 0, 0],
 ]
 animating = False
+direction = "none"
 
 game_board = GameBoard(game_size)
 
@@ -44,6 +45,7 @@ def main_game(event, saved_grid):
         if event.key == pygame.K_w or event.key == pygame.K_UP:
             direction = 'up'
             game_board.move_tiles(direction)
+            move_animation("up", saved_grid)
             game_board.merge_tiles(direction)
             game_board.move_tiles(direction)
             if saved_grid != game_board.grid:
@@ -61,6 +63,7 @@ def main_game(event, saved_grid):
         if event.key == pygame.K_s or event.key == pygame.K_DOWN:
             direction = 'down'
             game_board.move_tiles(direction)
+            move_animation("down", saved_grid)
             game_board.merge_tiles(direction)
             game_board.move_tiles(direction)
             if saved_grid != game_board.grid:
@@ -75,14 +78,7 @@ def main_game(event, saved_grid):
             if saved_grid != game_board.grid:
                 game_board.spawn_new_tile()
 
-        has_zero = False
-        for row in saved_grid:
-            if 0 in row:
-                has_zero = True
-                break
-        if not has_zero and saved_grid == game_board.grid:
-            pygame.quit()
-            sys.exit()
+    return direction
 
 
 def start_menu():
@@ -96,8 +92,6 @@ def start_menu():
     start_button.y = main_display.get_height() * 0.5 - start_button.h // 2
     start_button.draw(main_display)
     start_button.mouseover(main_display, mouse_rect, click[0])
-    #txtToScreen("2048", (main_display.get_width() * 0.5, main_display.get_height() * 0.3), 151, main_display,
-                #color=(0, 0, 0), bold=True)
     txtToScreen("2048", (main_display.get_width() * 0.5, main_display.get_height() * 0.3), 150, main_display, color=(112, 104, 95), bold=False)
     pygame.draw.rect(main_display, (143, 122, 102), (0, 0, main_display.get_width(), border_length))
     pygame.draw.rect(main_display, (143, 122, 102), (0, 0, border_length, main_display.get_height()))
@@ -129,19 +123,14 @@ def move_animation(direction, saved_grid):
                 move_grid[i][j] = cell_counter
 
     if direction == "left":
-        for i in range(game_size):
-            for j in range(game_size):
-                cell_counter = 0
-                for k in range(game_size - 1 - j):
-                    if saved_grid[i][3 - j] != 0:
-                        if saved_grid[i][3 - j - k - 1] == 0 or saved_grid[i][3 - j - k - 1] == saved_grid[i][3 - j]:
-                            cell_counter -= 1
-                        else:
-                            break
-                    else:
-                        break
-                move_grid[i][j] = cell_counter
-
+        for j in range(4):
+            cell_counter = 0
+            for k in range(3 - j):
+                if saved_grid[0][3 - j] != 0:
+                    if saved_grid[0][3 - j] == saved_grid[0][3 - j - k - 1]:
+                        cell_counter -= 1
+                        print(j, k)
+    
     return move_grid
 
 
@@ -198,16 +187,17 @@ def draw_animaion_horizontal(move_grid, frame):
         min(main_display.get_width(), main_display.get_height())))
     main_display.blit(game_surface, (main_display.get_width() // 2 - game_surface.get_width() // 2,
                                      main_display.get_height() // 2 - game_surface.get_height() // 2))
+    
+def draw_animaion_vertical(move_grid, frame):
 
-def draw_current_board():
     game_surface = pygame.Surface((default_size, default_size))
     main_display.fill((250, 248, 239))
     game_surface.fill((187, 173, 160))
 
     for i in range(game_size):
         for j in range(game_size):
-            text = str(game_board.grid[j][i])
-            match game_board.grid[j][i]:
+            text = str(saved_grid[j][i])
+            match saved_grid[j][i]:
                 case 0:
                     color = (205, 193, 180)
                     text = ""
@@ -234,6 +224,69 @@ def draw_current_board():
                 case 2048:
                     color = (237, 194, 46)
 
+            if saved_grid[j][i] != 0:
+                pygame.draw.rect(game_surface, color, (
+                    i * (cell_length + grid_margin) + grid_margin,
+                    j * (cell_length + grid_margin) + grid_margin + frame * move_grid[j][i] * cell_length / animation_length,
+                    cell_length,
+                    cell_length))
+                txtToScreen(text,
+                            (i * (cell_length + grid_margin) + grid_margin + cell_length // 2,
+                             j * (cell_length + grid_margin) + grid_margin + cell_length // 2 + frame * move_grid[j][i] * cell_length / animation_length),
+                            150,
+                            game_surface)
+
+    game_surface = pygame.transform.scale(game_surface, (
+        min(main_display.get_width(), main_display.get_height()),
+        min(main_display.get_width(), main_display.get_height())))
+    main_display.blit(game_surface, (main_display.get_width() // 2 - game_surface.get_width() // 2,
+                                     main_display.get_height() // 2 - game_surface.get_height() // 2))
+
+def draw_current_board():
+    game_surface = pygame.Surface((default_size, default_size))
+    main_display.fill((250, 248, 239))
+    game_surface.fill((187, 173, 160))
+
+    for i in range(game_size):
+        for j in range(game_size):
+            text = str(game_board.grid[j][i])
+            txt_color = (119, 110, 101)
+            match game_board.grid[j][i]:
+                case 0:
+                    color = (205, 193, 180)
+                    text = ""
+                case 2:
+                    color = (238, 228, 218)
+                case 4:
+                    color = (237, 224, 200)
+                case 8:
+                    color = (242, 177, 121)
+                    txt_color = (249, 246, 242)
+                case 16:
+                    color = (245, 149, 99)
+                    txt_color = (249, 246, 242)
+                case 32:
+                    color = (246, 124, 95)
+                    txt_color = (249, 246, 242)
+                case 64:
+                    color = (246, 94, 59)
+                    txt_color = (249, 246, 242)
+                case 128:
+                    color = (237, 207, 114)
+                    txt_color = (249, 246, 242)
+                case 256:
+                    color = (237, 204, 97)
+                    txt_color = (249, 246, 242)
+                case 512:
+                    color = (237, 200, 80)
+                    txt_color = (249, 246, 242)
+                case 1024:
+                    color = (237, 197, 63)
+                    txt_color = (249, 246, 242)
+                case 2048:
+                    color = (237, 194, 46)
+                    txt_color = (249, 246, 242)
+
             if game_board.grid[j][i] != 0:
                 pygame.draw.rect(game_surface, color, (
                     i * (cell_length + grid_margin) + grid_margin,
@@ -244,7 +297,7 @@ def draw_current_board():
                             (i * (cell_length + grid_margin) + grid_margin + cell_length // 2,
                              j * (cell_length + grid_margin) + grid_margin + cell_length // 2),
                             150,
-                            game_surface)
+                            game_surface, color=txt_color)
 
     game_surface = pygame.transform.scale(game_surface, (
         min(main_display.get_width(), main_display.get_height()),
@@ -283,13 +336,16 @@ while True:
                 for row in game_board.grid:
                     saved_grid.append(row.copy())
                 frame = 0
-                main_game(event, saved_grid)
+                direction = main_game(event, saved_grid)
                 move_grid = move_animation(event, saved_grid=saved_grid)
                 animating = True
 
     if game_screen:
         if animating:
-            draw_animaion_horizontal(move_grid=move_grid, frame=frame)
+            if direction == "right" or direction == "left":
+                draw_animaion_horizontal(move_grid=move_grid, frame=frame)
+            elif direction == "up" or direction == "down":
+                draw_animaion_vertical(move_grid=move_grid, frame=frame)
         else:
             draw_current_board()
         if frame == animation_length - 1:
@@ -300,6 +356,33 @@ while True:
                 [0, 0, 0, 0],
             ]
             animating = False
+            direction = "none"
+
+        saved_grid = []
+        for row in game_board.grid:
+            saved_grid.append(row.copy())
+        has_zero = False
+        has_move = False
+        for row in saved_grid:
+            if 0 in row:
+                has_zero = True
+                break
+        if not has_zero:
+            for i in range(4):
+                for j in range(3):
+                    if game_board.grid[i][j] == game_board.grid[i][j + 1]:
+                        has_move = True
+                        break
+            if not has_move:
+                for i in range(3):
+                    for j in range(4):
+                        if game_board.grid[i][j] == game_board.grid[i + 1][j]:
+                            has_move = True
+                            break
+        if not has_zero and saved_grid == game_board.grid and not has_move:
+            game_screen = False
+            end_screen = True
+            start_menu = True
 
     frame += 1
     frame %= animation_length
