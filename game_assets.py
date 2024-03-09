@@ -3,7 +3,7 @@ import random
 
 class GameBoard:
 
-    def __init__(self, size = 4):
+    def __init__(self, size=4):
         self.size = size
         self.grid = [[0 for _ in range(self.size)] for _ in range(self.size)]
 
@@ -21,7 +21,7 @@ class GameBoard:
                 rand = False
         return rand
 
-    def __move_tiles(self, direction):
+    def move_tiles(self, direction):
         if direction == 'right':
             for _ in range(self.size - 1):
                 for i in range(1, self.size):
@@ -54,7 +54,7 @@ class GameBoard:
                             self.grid[self.size - i][j] = self.grid[self.size - i - 1][j]
                             self.grid[self.size - i - 1][j] = 0
 
-    def __merge_tiles(self, direction):
+    def merge_tiles(self, direction):
         if direction == 'right':
             for i in range(self.size - 1):
                 for j in range(self.size):
@@ -83,7 +83,9 @@ class GameBoard:
                         self.grid[self.size - 1 - i][j] = 2 * self.grid[self.size - 1 - i][j]
                         self.grid[self.size - 1 - i - 1][j] = 0
 
+
     def update_grid(self, direction):
-        self.__move_tiles(direction)
-        self.__merge_tiles(direction)
-        self.__move_tiles(direction)
+        self.move_tiles(direction)
+        self.merge_tiles(direction)
+        self.move_tiles(direction)
+

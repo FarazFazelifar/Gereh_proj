@@ -90,8 +90,8 @@ class Button(object):
         return changecolor
 
 
-def txtToScreen(txt, pos, size, display, color=(0, 0, 0), centered=True, limiter=0):
-    font = pygame.font.SysFont(None, size)
+def txtToScreen(txt, pos, size, display, color=(0, 0, 0), centered=True, limiter=0, bold=False, italic=False):
+    font = pygame.font.SysFont(None, size, bold=bold, italic=italic)
     if limiter != 0:
         newtxt = txt[0: limiter]
     else:
